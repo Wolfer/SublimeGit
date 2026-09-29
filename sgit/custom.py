@@ -35,7 +35,11 @@ class GitCustomCommand(WindowCommand, GitCmd, GitErrorHelper):
 
     """
 
-    def run(self, cmd=None, async=False, output="view", syntax=None):
+    def run(self, cmd=None, async_=False, output="view", syntax=None, **kwargs):
+        # Preserve the legacy "async" argument in Sublime command settings.
+        async_ = kwargs.pop('async', async_)
+        if kwargs:
+            raise TypeError("Unexpected command arguments: %s" % ", ".join(sorted(kwargs)))
         repo = self.get_repo()
         if not repo:
             return
@@ -51,18 +55,18 @@ class GitCustomCommand(WindowCommand, GitCmd, GitErrorHelper):
                 cmd = cmd.strip()
                 if not cmd:
                     return
-                self.on_command(repo, cmd, async=async)
+                self.on_command(repo, cmd, async_=async_)
 
             self.window.show_input_panel('git', '', on_done, noop, noop)
         else:
-            self.on_command(repo, cmd, async=async)
+            self.on_command(repo, cmd, async_=async_)
 
-    def on_command(self, repo, cmd, async):
+    def on_command(self, repo, cmd, async_):
         if sublime.version() < '3000':
             cmd = cmd.encode('utf-8')
         cmd = shlex.split(cmd)
         self.init_output(repo, cmd)
-        if async:
+        if async_:
             self.run_async(repo, cmd)
         else:
             self.run_sync(repo, cmd)
